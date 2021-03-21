@@ -9,56 +9,56 @@ import UIKit
 
 class HabitsViewController: UIViewController {
     
-   
     private let layout = UICollectionViewFlowLayout()
-    lazy var habitsCollectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
     
-    private var habitViewController: HabitViewController?
+    lazy var collectionView: UICollectionView = {
+        let collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
+        collectionView.backgroundColor = UIColor(named: "brightGray")
+        collectionView.dataSource = self
+        collectionView.delegate = self
+        collectionView.register(ProgressCollectionViewCell.self, forCellWithReuseIdentifier: String(describing: ProgressCollectionViewCell.self))
+        collectionView.register(HabitCollectionViewCell.self, forCellWithReuseIdentifier: String(describing: HabitCollectionViewCell.self))
+        collectionView.toAutoLayout()
+        return collectionView
+    }()
+    
+   
+    
+    @objc func addNewHabit() {
+        print(#function)
+        let habitViewController = HabitViewController()
+        let navi = UINavigationController(rootViewController: habitViewController)
+        habitViewController.habitAdded = { self.collectionView.reloadData() }
+        present(navi, animated: true, completion: nil)
+    }
+    
+    
+//MARK: LIFECYCLE
     
     override func viewDidLoad() {
         super.viewDidLoad()
         self.navigationItem.title = "Сегодня"
         navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addNewHabit))
         navigationItem.rightBarButtonItem?.tintColor = UIColor(named: "appPurple")
-        navigationItem.largeTitleDisplayMode = .always
         navigationController?.navigationBar.prefersLargeTitles = true
+        navigationItem.largeTitleDisplayMode = .always
         
-        view.addSubview(habitsCollectionView)
-        habitsCollectionView.translatesAutoresizingMaskIntoConstraints = false
-        habitsCollectionView.backgroundColor = UIColor(named: "brightGray")
-        habitsCollectionView.register(ProgressCollectionViewCell.self, forCellWithReuseIdentifier: String(describing: ProgressCollectionViewCell.self))
-        habitsCollectionView.register(HabitCollectionViewCell.self, forCellWithReuseIdentifier: String(describing: HabitCollectionViewCell.self))
-        habitsCollectionView.delegate = self
-        habitsCollectionView.dataSource = self
+       // NotificationCenter.default.addObserver(self, selector: #selector(collectionView.reloadData), name: NSNotification.Name(rawValue: "ticked"), object: nil)
         
+        view.addSubview(collectionView)
+
         let constraints = [
-            habitsCollectionView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
-            habitsCollectionView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
-            habitsCollectionView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
-            habitsCollectionView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor)
+            collectionView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            collectionView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
+            collectionView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
+            collectionView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor)
         ]
         NSLayoutConstraint.activate(constraints)
     }
-    
-
-    @objc func addNewHabit() {
-        print(#function)
         
-        habitViewController = HabitViewController()
-        
-        habitViewController?.habitAdded = { [weak self] in
-            self?.habitsCollectionView.reloadData()
-        }
-        
-        guard let viewController = habitViewController else { return }
-        
-        self.present(viewController, animated: true, completion: nil)
-    }
-    
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(true)
-        //navigationController?.navigationBar.prefersLargeTitles = true
-        
+       
     }
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
@@ -67,6 +67,8 @@ class HabitsViewController: UIViewController {
     
    
 }
+
+//MARK: EXTENSIONS
 
 extension HabitsViewController: UICollectionViewDelegateFlowLayout {
     

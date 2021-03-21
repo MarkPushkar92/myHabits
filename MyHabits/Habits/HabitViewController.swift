@@ -10,9 +10,26 @@ import UIKit
 
 class HabitViewController: UIViewController {
     
-    var habitAdded: (() -> Void)?
+    var habitAdded: (() -> ())?
+    
+    weak var delegate: HabitDetailsDelegate?
     
     let scrollView = UIScrollView()
+    
+    let containerView: UIView = {
+        let container = UIView()
+        container.toAutoLayout()
+        return container
+    }()
+    
+    var existingHabit: Habit? {
+        didSet {
+            textInput.text = existingHabit!.name
+            colorButton.backgroundColor = existingHabit!.color
+            datePicker.date = existingHabit!.date
+            deleteButton.isHidden = false
+        }
+    }
     
     let nameLabel: UILabel = {
         let label = UILabel()
@@ -88,32 +105,58 @@ class HabitViewController: UIViewController {
         return datePicker
     }()
     
+    let deleteButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.backgroundColor = .clear
+        button.setTitle("Удалить привычку", for: .normal)
+        button.setTitleColor(.red, for: .normal)
+        button.toAutoLayout()
+        button.isHidden = true
+        button.addTarget(self, action: #selector(deleteHabit), for: .touchUpInside)
+        return button
+    }()
     
-    @objc func updateDateField(sender: UIDatePicker) {
-        datePickerTextInput.text = formatDateForDisplay(date: sender.date)
+//MARK: DELETEHABBIT
+    
+    @objc func deleteHabit() {
+        guard let _ = existingHabit else { return }
+        present(alert, animated: true, completion: nil)
     }
-
-    fileprivate func formatDateForDisplay(date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "HH:mm"
-        formatter.locale = Locale(identifier: "ru_RU")
-        return formatter.string(from: date)
+    
+    lazy var alert: UIAlertController = {
+        let alert = UIAlertController(title: "Удалить привычку", message: "Вы хотите удалить привычку \"\(existingHabit!.name)\" ?", preferredStyle: .alert)
+        alert.addAction(actionCancel)
+        alert.addAction(actionDel)
+        return alert
+    }()
+    
+    lazy var actionDel = UIAlertAction(title: "Удалить", style: .destructive) { (action: UIAlertAction) in
+        guard action.isEnabled else { return }
+        HabitsStore.shared.habits = HabitsStore.shared.habits.filter { $0 != self.existingHabit! }
+        self.dismiss(animated: true, completion: nil)
+        self.delegate?.closeVCFromAnotherVC()
         
     }
     
+    let actionCancel = UIAlertAction(title: "Cancel", style: .cancel)
+    
+//MARK: FUNC
+    
     func setupViews() {
         print(#function)
-        scrollView.translatesAutoresizingMaskIntoConstraints = false
+        scrollView.toAutoLayout()
         view.addSubview(scrollView)
-        scrollView.addSubview(nameLabel)
-        scrollView.addSubview(textInput)
-        scrollView.addSubview(colorLabel)
-        scrollView.addSubview(colorButton)
-        scrollView.addSubview(timeLabel)
-        scrollView.addSubview(dateText)
-        scrollView.addSubview(datePickerTextInput)
-        scrollView.addSubview(datePicker)
-        datePicker.translatesAutoresizingMaskIntoConstraints = false
+        scrollView.addSubview(containerView)
+        containerView.addSubview(nameLabel)
+        containerView.addSubview(textInput)
+        containerView.addSubview(colorLabel)
+        containerView.addSubview(colorButton)
+        containerView.addSubview(timeLabel)
+        containerView.addSubview(dateText)
+        containerView.addSubview(datePickerTextInput)
+        containerView.addSubview(datePicker)
+        containerView.addSubview(deleteButton)
+        containerView.toAutoLayout()
         
         let constraints = [
             scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
@@ -121,94 +164,115 @@ class HabitViewController: UIViewController {
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             
-            nameLabel.topAnchor.constraint(equalTo: scrollView.topAnchor, constant: 66),
-            nameLabel.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor, constant: 16),
-            nameLabel.bottomAnchor.constraint(equalTo: textInput.topAnchor, constant: -7),
-            nameLabel.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor, constant: -16),
+            containerView.topAnchor.constraint(equalTo: scrollView.topAnchor),
+            containerView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
+            containerView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
+            containerView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
+            containerView.heightAnchor.constraint(equalTo: scrollView.safeAreaLayoutGuide.heightAnchor),
+            containerView.widthAnchor.constraint(equalTo: scrollView.safeAreaLayoutGuide.widthAnchor),
             
-            textInput.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor, constant: 16),
-            textInput.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor, constant: -16),
+            nameLabel.topAnchor.constraint(equalTo: containerView.topAnchor, constant: 22),
+            nameLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
+            nameLabel.bottomAnchor.constraint(equalTo: textInput.topAnchor, constant: -7),
+            nameLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
+            
+            textInput.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
+            textInput.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
             textInput.bottomAnchor.constraint(equalTo: colorLabel.topAnchor, constant: -15),
             
-            colorLabel.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor, constant: -16),
-            colorLabel.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor, constant: 16),
+            colorLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
+            colorLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
             
             colorButton.topAnchor.constraint(equalTo: colorLabel.bottomAnchor, constant: 7),
-            colorButton.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor, constant: 16),
+            colorButton.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
             colorButton.widthAnchor.constraint(equalToConstant: 30),
             colorButton.heightAnchor.constraint(equalToConstant: 30),
             
             timeLabel.topAnchor.constraint(equalTo: colorButton.bottomAnchor, constant: 15),
-            timeLabel.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor, constant: -16),
-            timeLabel.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor, constant: 16),
+            timeLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
+            timeLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
             timeLabel.heightAnchor.constraint(equalToConstant: 30),
             
             dateText.topAnchor.constraint(equalTo: timeLabel.bottomAnchor, constant: 7),
-            dateText.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor, constant: 16),
+            dateText.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
             dateText.trailingAnchor.constraint(equalTo: datePickerTextInput.leadingAnchor, constant: -10),
             dateText.widthAnchor.constraint(equalToConstant: 100),
             dateText.heightAnchor.constraint(equalToConstant: 30),
             
             datePickerTextInput.heightAnchor.constraint(equalToConstant: 30),
-            datePickerTextInput.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor, constant: -16),
+            datePickerTextInput.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
             datePickerTextInput.topAnchor.constraint(equalTo: dateText.topAnchor),
             
             datePicker.topAnchor.constraint(equalTo: dateText.bottomAnchor),
-            datePicker.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor, constant: 16),
-            datePicker.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor, constant: -16),
-            datePicker.widthAnchor.constraint(equalTo: scrollView.widthAnchor, constant: -32)
+            datePicker.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 16),
+            datePicker.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -16),
+            datePicker.widthAnchor.constraint(equalTo: containerView.widthAnchor, constant: -32),
+            
+            deleteButton.centerXAnchor.constraint(equalTo: containerView.centerXAnchor),
+            deleteButton.bottomAnchor.constraint(equalTo: containerView.bottomAnchor, constant: -8)
             
         ]
         NSLayoutConstraint.activate(constraints)
     }
     
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        
-        view.backgroundColor = .white
-        setupViews()
-        datePicker.addTarget(self, action: #selector(updateDateField(sender:)), for: .valueChanged)
-        datePickerTextInput.inputView = datePicker
-        
-        
-        let navBar = UINavigationBar(frame: CGRect(x: 0, y: 0, width: view.frame.size.width, height: 44))
-        view.addSubview(navBar)
-        let navItem = UINavigationItem(title: "Создать")
-        let saveButton = UIBarButtonItem(title: "Сохранить", style: .plain, target: self, action: #selector(saveBarButton))
-        saveButton.tintColor = UIColor(named: "appPurple")
-        navItem.rightBarButtonItem = saveButton
-        let cancelButton = UIBarButtonItem(title: "Отменить", style: .plain, target: self, action: #selector(cancelBarButton))
-        cancelButton.tintColor = UIColor(named: "appPurple")
-        navItem.leftBarButtonItem = cancelButton
-        navBar.setItems([navItem], animated: false)
-
+    func navSettings() {
+        navigationController?.navigationBar.topItem?.leftBarButtonItem = .init(title: "Отменить", style: .plain, target: self, action: #selector(cancelBarButton))
+        navigationController?.navigationBar.topItem?.leftBarButtonItem?.tintColor = UIColor(named: "appPurple")
+        navigationController?.navigationBar.topItem?.rightBarButtonItem = .init(title: "Сохранить", style: .plain, target: self, action: #selector(saveBarButton))
+        navigationController?.navigationBar.topItem?.rightBarButtonItem?.tintColor = UIColor(named: "appPurple")
     }
     
     @objc func saveBarButton() {
-        print(#function)
-        let newHabit = Habit(name: textInput.text!,
-                             date: datePicker.date,
-                             color: colorButton.backgroundColor!)
-        let store = HabitsStore.shared
-        store.habits.append(newHabit)
-        reloadInputViews()
-        
-        dismiss(animated: true) { [weak self] in
-            self?.habitAdded?()
+        if existingHabit == nil {
+            let newHabit = Habit(name: textInput.text!,
+                                 date: datePicker.date,
+                                 color: colorButton.backgroundColor!)
+            let store = HabitsStore.shared
+            store.habits.append(newHabit)
+            dismiss(animated: true, completion: habitAdded)
+        }   else {
+            existingHabit!.name = textInput.text ?? ""
+            existingHabit!.date = datePicker.date
+            existingHabit!.color = colorButton.backgroundColor!
+            let index = HabitsStore.shared.habits.firstIndex(where: {$0 == existingHabit!})
+            HabitsStore.shared.habits[index!] = existingHabit!
+            dismiss(animated: true, completion: habitAdded)
         }
     }
     
     @objc func cancelBarButton() {
         print(#function)
         self.dismiss(animated: true, completion: nil)
-
     }
-        @objc func colorButtonPressed() {
+    
+    @objc func colorButtonPressed() {
         print(#function)
         let picker = UIColorPickerViewController()
         self.present(picker, animated: true, completion: nil)
         picker.selectedColor = colorButton.backgroundColor!
         picker.delegate = self
+    }
+    
+    @objc func updateDateField(sender: UIDatePicker) {
+        datePickerTextInput.text = formatDateForDisplay(date: sender.date)
+    }
+
+    func formatDateForDisplay(date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        formatter.locale = Locale(identifier: "ru_RU")
+        return formatter.string(from: date)
+    }
+
+//MARK: LIFECYCLE
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        view.backgroundColor = .white
+        setupViews()
+        datePicker.addTarget(self, action: #selector(updateDateField(sender:)), for: .valueChanged)
+        datePickerTextInput.inputView = datePicker
+        navSettings()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -237,6 +301,8 @@ class HabitViewController: UIViewController {
     }
     
 }
+
+//MARK: EXTENSIONS
 
 extension HabitViewController: UIColorPickerViewControllerDelegate {
     func colorPickerViewControllerDidSelectColor(_ viewController: UIColorPickerViewController) {

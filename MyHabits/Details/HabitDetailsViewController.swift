@@ -33,29 +33,27 @@ class HabitDetailsViewController: UIViewController {
     ]
     
     
-//    @objc func moveToHabit() {
-//        guard habit != nil else { return }
-//        let rvc = HabitViewController()
-//        let navi = UINavigationController(rootViewController: rvc)
-//        rvc.delegate = self
-//        rvc.existingHabit = habit!
-//        rvc.modalTransitionStyle = .flipHorizontal
-//        rvc.someCompletion = {
-//            self.viewWillAppear(true)
-//        }
-//        present(navi, animated: true, completion: nil)
-//
-//    }
-//
+    @objc func moveToHabit() {
+        guard habit != nil else { return }
+        let rvc = HabitViewController()
+        let navi = UINavigationController(rootViewController: rvc)
+        rvc.delegate = self
+        rvc.existingHabit = habit!
+        rvc.modalTransitionStyle = .flipHorizontal
+        rvc.habitAdded = {
+            self.viewWillAppear(true)
+        }
+        present(navi, animated: true, completion: nil)
 
+    }
+
+//MARK: LIFECYCLE
     
     override func viewDidLoad() {
         super.viewDidLoad()
-      //  navigationItem.largeTitleDisplayMode = .never
-        navigationItem.leftBarButtonItem?.tintColor = UIColor(named: "appPurple")
-    
-        navigationItem.backBarButtonItem?.tintColor = UIColor(named: "appPurple")
-//        navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Править", style: .plain, target: self, action: #selector(moveToHabit))
+        navigationItem.largeTitleDisplayMode = .never
+        navigationController?.navigationBar.tintColor = UIColor(named: "appPurple")
+        navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Править", style: .plain, target: self, action: #selector(moveToHabit))
         view.backgroundColor = UIColor(named: "brightGray")
         view.addSubview(tableView)
         NSLayoutConstraint.activate(constraints)
@@ -67,18 +65,18 @@ class HabitDetailsViewController: UIViewController {
         guard habit != nil else { return }
         let index = HabitsStore.shared.habits.firstIndex(where: {$0 == self.habit!})
         title = HabitsStore.shared.habits[index!].name
-        navigationController?.navigationBar.prefersLargeTitles = false
-        navigationItem.leftBarButtonItem?.tintColor = UIColor(named: "appPurple")
+        
     }
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-     //   navigationController?.navigationBar.prefersLargeTitles = true
-
+    
     }
     
 }
     
+//MARK: EXTENSIONS
+
 extension HabitDetailsViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
         return "Активность"
