@@ -72,7 +72,6 @@ class HabitCollectionViewCell: UICollectionViewCell {
         if habit?.isAlreadyTakenToday == false {
                 HabitsStore.shared.track(habit!)
         }
-       // NotificationCenter.default.post(name: NSNotification.Name("ticked"), object: nil)
     }
     
     func setupViews() {

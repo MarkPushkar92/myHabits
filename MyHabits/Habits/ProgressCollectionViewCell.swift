@@ -18,13 +18,12 @@ class ProgressCollectionViewCell: UICollectionViewCell {
         return label
     }()
     
-    private var percentLabel: UILabel = {
+    var percentLabel: UILabel = {
         var label = UILabel()
         label.toAutoLayout()
         label.text = "\(Int(HabitsStore.shared.todayProgress) * 100)%"
         label.textColor = .systemGray
         label.font = .systemFont(ofSize: 13)
-        
         return label
     }()
     

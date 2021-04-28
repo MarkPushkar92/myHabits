@@ -43,8 +43,6 @@ class HabitsViewController: UIViewController {
         navigationController?.navigationBar.prefersLargeTitles = true
         navigationItem.largeTitleDisplayMode = .always
         
-       // NotificationCenter.default.addObserver(self, selector: #selector(collectionView.reloadData), name: NSNotification.Name(rawValue: "ticked"), object: nil)
-        
         view.addSubview(collectionView)
 
         let constraints = [
@@ -65,6 +63,10 @@ class HabitsViewController: UIViewController {
         
     }
     
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(true)
+        collectionView.reloadData()
+    }
    
 }
 
@@ -113,7 +115,10 @@ extension HabitsViewController: UICollectionViewDataSource {
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         switch indexPath.section {
         case 0:
+            let progressFloat = HabitsStore.shared.todayProgress
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: String(describing: ProgressCollectionViewCell.self), for: indexPath) as! ProgressCollectionViewCell
+            cell.progressBar.setProgress(progressFloat, animated: true)
+            cell.percentLabel.text = "\(Int(HabitsStore.shared.todayProgress * 100))%"
             return cell
         default:
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: String(describing: HabitCollectionViewCell.self), for: indexPath) as! HabitCollectionViewCell
